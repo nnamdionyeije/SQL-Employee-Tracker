@@ -1,3 +1,8 @@
+//https://stackoverflow.com/questions/66626936/inquirer-js-populate-list-choices-from-sql-database
+// cited code
+// Need to figure out how to have 'none' as an option for the manager when creating employees
+// I could go over the left join bit
+
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 require("console.table");
@@ -69,9 +74,6 @@ const addRole = async () => {
             name: "dept_id",
             message: "Which department does the role belong to?",
             choices: await departmentChoices(),
-            // when (answers) {
-            //     return answers.task === 'View a Department Budget'
-            // }
         }
     ])
     .then((answer) =>{
@@ -121,10 +123,17 @@ async function addEmployee () {
 
     ])
     .then((answer) =>{
-        console.log(answer.employeeRole);
-        db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.employeeFirstName}", "${answer.employeeLastName}", "${answer.employeeRole}", "${answer.employeeRole}");`)
-        console.log(`\n New employee has been added successfully`)
-        main();
+        console.log(answer.employeeManager);
+        if (answer.employeeManager == 0) {
+            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.employeeFirstName}", "${answer.employeeLastName}", "${answer.employeeRole}", NULL);`)
+            console.log(`\n New employee has been added successfully`)
+            main();
+        } else {
+            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.employeeFirstName}", "${answer.employeeLastName}", "${answer.employeeRole}", "${answer.employeeManager}");`)
+            console.log(`\n New employee has been added successfully`)
+            main();
+        }
+        
     })
 }
 
@@ -137,6 +146,8 @@ const roleChoices = async () => {
 const managerChoices = async () => {
     const managerQuery = `SELECT id AS value, CONCAT(first_name, ' ', last_name) AS name FROM employee;`;
     const manager = await db2.query(managerQuery);
+    console.log(manager[0]);
+    manager[0].push({value: 0, name: 'None' });
     return manager[0];
 }
 
@@ -225,4 +236,3 @@ async function main () {
 
 main();
 
-//https://stackoverflow.com/questions/66626936/inquirer-js-populate-list-choices-from-sql-database
