@@ -1,28 +1,20 @@
-//https://stackoverflow.com/questions/66626936/inquirer-js-populate-list-choices-from-sql-database
-// cited code
-// Need to figure out how to have 'none' as an option for the manager when creating employees
-// I could go over the left join bit
-
+//import dependencies
 const inquirer = require('inquirer');
-const mysql = require('mysql2');
+const {connection:db, asyncConnection:db2} = require("./db/connection");
 require("console.table");
-
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 's7n&n2tNuV^bzAABAaRj',
-    database: 'employees_db'
-})
+const logo = require('asciiart-logo');
 
 function viewAllDepartments () {
-    db.query("SELECT * FROM department", (err, data) => {
+    db.query(`SELECT * FROM department
+    ORDER BY department.id`, (err, data) => {
         console.table(data);
         main();
     })
 }
 
 function viewAllRoles () {
-    db.query("SELECT role.id, role.title, department.name AS department, role.salary FROM role JOIN department ON role.department_id = department.id;", (err, data) => {
+    db.query(`SELECT role.id, role.title, department.name AS department, role.salary FROM role JOIN department ON role.department_id = department.id
+    ORDER BY role.id;`, (err, data) => {
         console.table(data);
         main();
     })     
@@ -83,13 +75,6 @@ const addRole = async () => {
     })
 }
 
-const db2 = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 's7n&n2tNuV^bzAABAaRj',
-    database: 'employees_db'
-}).promise();
-
 const departmentChoices = async () => {
     const departmentQuery = `SELECT id AS value, name FROM department;`;
     const departments = await db2.query(departmentQuery);
@@ -118,12 +103,11 @@ async function addEmployee () {
             type: "list",
             name: "employeeManager",
             message: "Who is the employee's manager?",
-            choices: await managerChoices() // need to ask about have a 'none' option
+            choices: await managerChoices()
         }
 
     ])
     .then((answer) =>{
-        console.log(answer.employeeManager);
         if (answer.employeeManager == 0) {
             db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.employeeFirstName}", "${answer.employeeLastName}", "${answer.employeeRole}", NULL);`)
             console.log(`\n New employee has been added successfully`)
@@ -146,8 +130,7 @@ const roleChoices = async () => {
 const managerChoices = async () => {
     const managerQuery = `SELECT id AS value, CONCAT(first_name, ' ', last_name) AS name FROM employee;`;
     const manager = await db2.query(managerQuery);
-    console.log(manager[0]);
-    manager[0].push({value: 0, name: 'None' });
+    manager[0].unshift({value: 0, name: 'None' });
     return manager[0];
 }
 
@@ -189,7 +172,7 @@ const updatedRoleChoices = async () => {
 }
 
 
-
+console.log(logo({name: 'Employee Manager'}).render());
 async function main () {
     inquirer.prompt({
         type: "list",
@@ -207,29 +190,30 @@ async function main () {
         ]
     })
     .then(answer => {
-        if (answer.action == "View all departments") {
-            viewAllDepartments()
-        }
-        if (answer.action == "View all roles") {
-            viewAllRoles()
-        }
-        if (answer.action == "View all employees") {
-            viewAllEmployees()
-        }
-        if (answer.action == "Add a department") {
-            addDepartment();
-        }
-        if (answer.action == "Add a role") {
-            addRole();
-        }
-        if (answer.action == "Add an employee") {
-            addEmployee();
-        }
-        if (answer.action == "Update an employee role") {
-            updateEmployeeRole();
-        }
-        if(answer.action == "Exit") {
-            process.exit(1)
+        switch (answer.action) {
+            case "View all departments": 
+                viewAllDepartments();
+                break;
+            case "View all roles":
+                viewAllRoles();
+                break;
+            case "View all employees":
+                viewAllEmployees();
+                break;
+            case "Add a department":
+                addDepartment();
+                break;
+            case "Add a role":
+                addRole();
+                break;
+            case "Add an employee":
+                addEmployee();
+                break;
+            case "Update an employee role":
+                updateEmployeeRole();
+                break;
+            case "Exit":
+                process.exit(1);
         }
     })
 }
