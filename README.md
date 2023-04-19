@@ -39,7 +39,7 @@ https://stackoverflow.com/questions/66626936/inquirer-js-populate-list-choices-f
 
 ## Walkthrough Video
 
-youtube.com
+https://youtu.be/GZqz0K-RCrc
 
 ## Questions
 
